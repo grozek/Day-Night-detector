@@ -20,6 +20,7 @@ net = SimpleCNN()
 optimizer = torch.optim.Adam(net.parameters(),eps=0.000001, lr=0.01, betas=(0.5,0.999), weight_decay=0.0001)
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 predicted = []
+all_preds = []
 
 def train(args, net, device, train_loader, optimizer):
     net.train()  # set model to training mode
@@ -28,7 +29,12 @@ def train(args, net, device, train_loader, optimizer):
         data, target = data.to(device), target.to(device)
         optimizer.zero_grad()               # clear old gradients
         output = net(data)                  # forward pass
-        predicted.append(output)
+        
+        # Convert logits to predictions: 0 or 1
+        preds = (torch.sigmoid(output) > 0.5).int()  # shape: [batch_size, 1]
+
+        # Add predictions to all_preds
+        all_preds.append(preds.cpu())  # keep tensors in list
         # If using BCEWithLogitsLoss, target must be float and output raw
         target = target.float().unsqueeze(1)  # shape: [batch_size, 1]
         loss = F.binary_cross_entropy_with_logits(output, target)
