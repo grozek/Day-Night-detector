@@ -1,32 +1,30 @@
 import matplotlib.pyplot as plt
 import torchvision
 
-def show_images(dataloader, predicted, batch_size=16):
+def show_images(dataloader, all_preds, all_targets, epochs, batches):
     class_names = ['day', 'night']
-    dataiter = iter(dataloader)
-    images, labels = next(dataiter)
-
+    #dataiter = iter(dataloader)
+    #images, labels = next(dataiter)
+    runs = 599
     # unnormalize for display
     def unnormalize(img):
         return img * 0.5 + 0.5
 
-    images = unnormalize(images)
-    num_to_show = min(len(images), len(predicted))
-
     # Create a copy to modify for color marking
-    images_colored = images.clone()
     i = 0
-
-    while (i < num_to_show):
-        if labels[i] == predicted[i]:
-            # Correct prediction → Red tint
-            images_colored[i][0] = 1.0  # Red channel full
-            images_colored[i][1] = 0.0  # No green
+    images_colored = [len(all_preds)][3]
+    while (i < all_preds):
+        print (f"LABELS item:" + str(all_targets[i]))
+        print (f"PREDS item:" + str(all_preds[i]))
+        if all_targets[i] == all_preds[i]:
+            # Correct prediction → green tint
+            images_colored[i][0] = 0.0  # no red
+            images_colored[i][1] = 1.0  # green
             images_colored[i][2] = 0.0  # No blue
         else:
-            # Incorrect prediction → Green tint
-            images_colored[i][0] = 0.0
-            images_colored[i][1] = 1.0
+            # Incorrect prediction → red tint
+            images_colored[i][0] = 1.0
+            images_colored[i][1] = 0.0
             images_colored[i][2] = 0.0
         i = i + 1
 
@@ -40,6 +38,6 @@ def show_images(dataloader, predicted, batch_size=16):
 
     # Print actual labels
     print('Labels:   ', [class_names[label.item()] for label in labels])
-    print('Predicted:', [class_names[p.item()] for p in predicted])
+    print('Predicted:', [class_names[p] for p in all_preds])
 
 
