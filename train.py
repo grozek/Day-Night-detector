@@ -10,17 +10,20 @@ import showImage
 
 # CREATE PARSER FOR ARGS
 parser = argparse.ArgumentParser()
-parser.add_argument('--epochs', type=int, default=1)
+parser.add_argument('--epochs', type=int, default=10)
 parser.add_argument('--batch-size', type=int, default=16)
 args = parser.parse_args()
-all_preds = []
-all_targets = []
+all_preds_train = []
+all_targets_train = []
+all_preds_test = []
+all_targets_test = []
 net = SimpleCNN()
-optimizer = torch.optim.Adam(net.parameters(),eps=0.000001, lr=0.01, betas=(0.5,0.999), weight_decay=0.0001)
+optimizer = torch.optim.Adam(net.parameters(),eps=0.000001, lr=0.01, betas=(0.5,0.999), weight_decay=0.001)
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=5, gamma=0.5)
 
 
-def train(args, net, device, train_loader, optimizer, all_preds, all_labels):
+def train(args, net, device, train_loader, optimizer, all_preds_train, all_targets_train):
     net.train()  # set model to training mode
     for batch_idx, (data, target) in enumerate(train_loader):
         print (batch_idx)
@@ -30,7 +33,7 @@ def train(args, net, device, train_loader, optimizer, all_preds, all_labels):
 
         # Convert logits to predictions: 0 or 1
         preds = (torch.sigmoid(output) > 0.5).int()  # shape: [batch_size, 1]
-        all_preds.extend(preds.squeeze(1).tolist())
+        all_preds_train.extend(preds.squeeze(1).tolist())
 
         #print (f"specific pred:" + str(preds))
         # Add predictions to all_preds
@@ -38,43 +41,48 @@ def train(args, net, device, train_loader, optimizer, all_preds, all_labels):
         # If using BCEWithLogitsLoss, target must be float and output raw
 
         target = target.float().unsqueeze(1)  # shape: [batch_size, 1]
-        all_targets.extend(target.squeeze(1).int().tolist())
+        all_targets_train.extend(target.squeeze(1).int().tolist())
         loss = F.binary_cross_entropy_with_logits(output, target)
         loss.backward()                     # backpropagate
         optimizer.step()                    # update weights
-        print("training")
-        print(loss)
-    print (f"nr of preds:" + str(len(all_preds)) + "and nr of targets" + str(len(all_targets)))
+        #print("training")
+        #print(loss)
+    #print (f"nr of preds:" + str(len(all_preds)) + "and nr of targets" + str(len(all_targets)))
         
-    print(f"all_targets:" + str(all_targets))
-    return all_preds
+    #print(f"all_targets:" + str(all_targets))
+    return all_preds_train, all_targets_train
 
 
-def test(args, net, device, test_loader):
+def test(args, net, device, test_loader,all_preds_test, all_targets_test):
     with torch.no_grad(): # suppress updating of gradients
         net.eval() # toggle batch norm, dropout
         for data, target in test_loader:
             data, target = data.to(device), target.to(device)
             output = net(data)
+            preds = (torch.sigmoid(output) > 0.5).int()  # shape: [batch_size, 1]
+            all_preds_test.extend(preds.squeeze(1).tolist())
+
             target = target.float().unsqueeze(1)
-
+            all_targets_test.extend(target.squeeze(1).int().tolist())
             loss = F.binary_cross_entropy_with_logits(output, target)
-            print(loss)
-            print("---TESTING---")
+            #print(loss)
+            #print("---TESTING---")
     net.train() # toggle batch norm, dropout back again
-
+    return all_preds_test, all_targets_test
 
 for epoch in range(0, args.epochs): # training loop
-    all_preds = train(args, net, device, dataset.train_loader, optimizer, all_preds, all_targets)
-    test(args, net, device, dataset.test_loader)
-    print (f"ALL PREDS in TRAIN:" + str(all_preds))
-showImage.show_images(dataset.train_loader, all_preds, all_targets, args.epochs, args.batch_size)
+    print(f"Epoch: " + str(epoch))
+    all_preds_train, all_targets_train = train(args, net, device, dataset.train_loader, optimizer, all_preds_train, all_targets_train)
+    if (epoch % 3 == 0):
+        all_preds_test, all_targets_test = test(args, net, device, dataset.test_loader, all_preds_test, all_targets_test)
 
+    #print (f"ALL PREDS in TRAIN:" + str(all_preds))
+    scheduler.step() 
+showImage.show_images(dataset.train_loader, all_preds_train, all_targets_train, args.epochs, args.batch_size)
+showImage.show_images(dataset.test_loader, all_preds_test, all_targets_test, args.epochs, args.batch_size)
 
     #showImage.show_images(dataset.train_loader, predicted)
 
     # periodically evaluate network on test data
     # if epoch % 10 == 0:
     #    test(args, net, device, dataset.test_loader)
-
-
