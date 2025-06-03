@@ -35,8 +35,8 @@ def show_images(dataloader, all_preds, all_targets, epochs, batches, image_size=
     plt.imshow(grid.permute(1, 2, 0))
     plt.axis('off')
     plt.title("Green = Correct, Red = Incorrect")
-    print('Predicted:', [int(p) for p in all_preds])
-    print('Targets:  ', [int(t) for t in all_targets])
+    #print('Predicted:', [int(p) for p in all_preds])
+    #print('Targets:  ', [int(t) for t in all_targets])
     plt.show()
 
     # Print actual labels
