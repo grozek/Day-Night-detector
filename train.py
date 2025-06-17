@@ -28,8 +28,8 @@ start_time = time.time()
 # Setp
 device = torch.device("mps" if torch.backends.mps.is_available() else "cpu")
 net = CNN().to(device)
-optimizer = torch.optim.Adam(net.parameters(),eps=0.000001, lr=0.0001, betas=(0.9,0.999), weight_decay=0.00001)
-scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=1, gamma=0.5)
+optimizer = torch.optim.Adam(net.parameters(),eps=0.000001, lr=0.001, betas=(0.9,0.999), weight_decay=0.00001)
+scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=2, gamma=0.5)
 
 
 # TRAIN: train the dataset

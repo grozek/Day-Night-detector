@@ -8,8 +8,21 @@
 
 import torch.nn as nn
 import torch
+import random
+import numpy as np
 
 # Convolutional NN 
+
+def set_seed(seed=42):
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed(seed)  # if using CUDA
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
+
+set_seed(42)
+
 class CNN(nn.Module):
 
     # network initallization
